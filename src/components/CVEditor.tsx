@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Download, Eye, Edit3, Plus, Trash2,
+  ArrowLeft, Download, Eye, Edit3, Plus, Trash2,
   Sparkles, BarChart3, Loader2, ChevronDown, Wand2, X, LayoutTemplate
 } from 'lucide-react';
 import { CVData } from '../types/cv';
@@ -32,6 +32,7 @@ const CVEditor: React.FC<CVEditorProps> = ({
   cvData,
   setCvData,
   onBackToHome,
+  onTemplateChange,
   initialTab = 'edit',
   initialPanel = null,
 }) => {
@@ -107,8 +108,8 @@ const CVEditor: React.FC<CVEditorProps> = ({
           {/* Left: back + title */}
           <div className="flex items-center gap-3 min-w-0">
             <button onClick={onBackToHome} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-600 transition-colors flex-shrink-0">
-              <LayoutTemplate className="w-4 h-4" />
-              <span className="hidden sm:inline">Change Template</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Back</span>
             </button>
             <div className="h-5 w-px bg-gray-200 hidden sm:block" />
             <h1 className="text-base font-semibold text-slate-800 hidden sm:block">CV Editor</h1>
@@ -218,6 +219,30 @@ const CVEditor: React.FC<CVEditorProps> = ({
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* ── Template Selection ──────────────────────── */}
+              <div className={cardCls}>
+                <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                  <LayoutTemplate className="w-4 h-4 text-teal-600" />
+                  CV Template
+                </h3>
+                <div className="relative">
+                  <select
+                    value={selectedTemplate}
+                    onChange={(e) => onTemplateChange?.(e.target.value)}
+                    className="w-full appearance-none px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent text-sm bg-white text-slate-700 font-medium cursor-pointer transition-colors"
+                    aria-label="Select Template"
+                  >
+                    <option value="classic">Classic Professional</option>
+                    <option value="modern">Modern Executive</option>
+                    <option value="creative">Creative Professional</option>
+                    <option value="minimal">Minimal Clean</option>
+                    <option value="executive">Executive Elite</option>
+                    <option value="tech">Tech Professional</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
               </div>
 
               {/* ── Form fields ──────────────────────────────── */}
