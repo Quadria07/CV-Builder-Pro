@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Download, Eye, Edit3, Plus, Trash2,
   Sparkles, BarChart3, Loader2, ChevronDown, Wand2, X
@@ -17,6 +17,7 @@ interface CVEditorProps {
   onBackToHome: () => void;
   onTemplateChange?: (templateId: string) => void;
   initialTab?: 'edit' | 'preview';
+  initialPanel?: 'ai' | 'ats' | null;
 }
 
 type Tab = 'edit' | 'preview';
@@ -32,11 +33,17 @@ const CVEditor: React.FC<CVEditorProps> = ({
   setCvData,
   onBackToHome,
   initialTab = 'edit',
+  initialPanel = null,
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
-  const [openPanel, setOpenPanel] = useState<Panel>(null);
+  const [openPanel, setOpenPanel] = useState<Panel>(initialPanel);
   const [isGenerating, setIsGenerating] = useState(false);
   const { showToast } = useToast();
+
+  // Scroll to top when the editor mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   /* ─── Data handlers ─────────────────────────────────────────── */
   const handlePersonalInfoChange = (field: string, value: string) =>

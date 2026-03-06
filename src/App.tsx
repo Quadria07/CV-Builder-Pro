@@ -44,7 +44,8 @@ function App() {
           setCvData={setCvData}
           onBackToHome={handleBackToHome}
           onTemplateChange={setSelectedTemplate}
-          initialTab={startWithAI ? 'ai' : 'edit'}
+          initialTab="edit"
+          initialPanel={startWithAI ? 'ai' : null}
         />
       )}
     </ToastProvider>
