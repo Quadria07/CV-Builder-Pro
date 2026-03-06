@@ -1,4 +1,5 @@
 import React from 'react';
+import { User, Zap, Briefcase, GraduationCap, Heart, FileText } from 'lucide-react';
 import { CVData } from '../../types/cv';
 
 interface CreativeTemplateProps {
@@ -36,8 +37,8 @@ const CreativeTemplate: React.FC<CreativeTemplateProps> = ({ cvData }) => {
         {cvData.personalInfo.summary && (
           <div className="mb-8">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                S
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white mr-3">
+                <User className="w-4 h-4" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Summary</h2>
             </div>
@@ -53,8 +54,8 @@ const CreativeTemplate: React.FC<CreativeTemplateProps> = ({ cvData }) => {
         {cvData.skills.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                ⚡
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
+                <Zap className="w-4 h-4" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Skills</h2>
             </div>
@@ -75,8 +76,8 @@ const CreativeTemplate: React.FC<CreativeTemplateProps> = ({ cvData }) => {
         {cvData.workHistory.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                💼
+              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white mr-3">
+                <Briefcase className="w-4 h-4" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Experience</h2>
             </div>
@@ -112,8 +113,8 @@ const CreativeTemplate: React.FC<CreativeTemplateProps> = ({ cvData }) => {
         {cvData.education.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                🎓
+              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white mr-3">
+                <GraduationCap className="w-4 h-4" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Education</h2>
             </div>
@@ -139,8 +140,8 @@ const CreativeTemplate: React.FC<CreativeTemplateProps> = ({ cvData }) => {
         {cvData.interests.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                ❤️
+              <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center text-white mr-3">
+                <Heart className="w-4 h-4" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Interests</h2>
             </div>
@@ -158,8 +159,8 @@ const CreativeTemplate: React.FC<CreativeTemplateProps> = ({ cvData }) => {
         {cvData.references && (
           <div className="mb-8">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                📝
+              <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white mr-3">
+                <FileText className="w-4 h-4" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">References</h2>
             </div>

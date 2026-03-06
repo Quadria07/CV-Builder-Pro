@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ArrowLeft, Download, Eye, Edit3, Plus, Trash2,
-  Sparkles, BarChart3, Loader2, ChevronDown, Wand2, X
+  Download, Eye, Edit3, Plus, Trash2,
+  Sparkles, BarChart3, Loader2, ChevronDown, Wand2, X, LayoutTemplate
 } from 'lucide-react';
 import { CVData } from '../types/cv';
 import CVPreview from './CVPreview';
@@ -107,8 +107,8 @@ const CVEditor: React.FC<CVEditorProps> = ({
           {/* Left: back + title */}
           <div className="flex items-center gap-3 min-w-0">
             <button onClick={onBackToHome} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-600 transition-colors flex-shrink-0">
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Back</span>
+              <LayoutTemplate className="w-4 h-4" />
+              <span className="hidden sm:inline">Change Template</span>
             </button>
             <div className="h-5 w-px bg-gray-200 hidden sm:block" />
             <h1 className="text-base font-semibold text-slate-800 hidden sm:block">CV Editor</h1>

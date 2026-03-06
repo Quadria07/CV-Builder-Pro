@@ -1,4 +1,5 @@
 import React from 'react';
+import { MapPin, Phone, Mail, Terminal } from 'lucide-react';
 import { CVData } from '../../types/cv';
 
 interface TechTemplateProps {
@@ -16,20 +17,18 @@ const TechTemplate: React.FC<TechTemplateProps> = ({ cvData }) => {
               {cvData.personalInfo.name || 'YOUR NAME'}
             </h1>
             <div className="text-teal-400 text-sm">
-              {cvData.personalInfo.address && (
-                <div className="mb-1">📍 {cvData.personalInfo.address}</div>
-              )}
+              <div className="mb-1 flex items-center"><MapPin className="w-4 h-4 mr-1.5" />{cvData.personalInfo.address}</div>
               <div className="flex space-x-4">
                 {cvData.personalInfo.phone && (
-                  <span>📞 {cvData.personalInfo.phone}</span>
+                  <span className="flex items-center"><Phone className="w-4 h-4 mr-1.5" />{cvData.personalInfo.phone}</span>
                 )}
                 {cvData.personalInfo.email && (
-                  <span>✉️ {cvData.personalInfo.email}</span>
+                  <span className="flex items-center"><Mail className="w-4 h-4 mr-1.5" />{cvData.personalInfo.email}</span>
                 )}
               </div>
             </div>
           </div>
-          <div className="text-6xl">💻</div>
+          <div className="text-teal-400 opacity-50"><Terminal className="w-12 h-12" strokeWidth={1.5} /></div>
         </div>
       </div>
 
