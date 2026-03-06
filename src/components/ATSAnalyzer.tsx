@@ -8,6 +8,7 @@ import { CVData } from '../types/cv';
 
 interface ATSAnalyzerProps {
     cvData: CVData;
+    compact?: boolean;
 }
 
 function scoreColor(score: number, max: number) {

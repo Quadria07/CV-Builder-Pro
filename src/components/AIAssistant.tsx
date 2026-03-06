@@ -6,9 +6,10 @@ import { useToast } from './ToastProvider';
 
 interface AIAssistantProps {
     onCVGenerated: (data: CVData) => void;
+    compact?: boolean;
 }
 
-const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated }) => {
+const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = false }) => {
     const [activeMode, setActiveMode] = useState<'generate' | 'optimize'>('generate');
     const [prompt, setPrompt] = useState('');
     const [cvText, setCvText] = useState('');
@@ -58,8 +59,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated }) => {
                             key={id}
                             onClick={() => { setActiveMode(id); }}
                             className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-medium transition-all ${activeMode === id
-                                    ? 'bg-teal-50 text-teal-700 border-b-2 border-teal-500'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                ? 'bg-teal-50 text-teal-700 border-b-2 border-teal-500'
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                                 }`}
                         >
                             <Icon className="w-4 h-4 flex-shrink-0" />
@@ -83,7 +84,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated }) => {
                             <textarea
                                 value={prompt}
                                 onChange={e => setPrompt(e.target.value)}
-                                rows={10}
+                                rows={compact ? 5 : 10}
                                 maxLength={5000}
                                 className={textareaCls}
                                 placeholder={`Example: I'm a software engineer with 5 years of experience specialising in React and Node.js. I work at a startup where I lead frontend development. BSc Computer Science from University of Lagos. Key achievement: built a real-time dashboard that increased engagement by 40%.`}
