@@ -118,13 +118,13 @@ const CVEditor: React.FC<CVEditorProps> = ({
           {/* Center: 2 tabs */}
           <nav className="flex items-center gap-1 bg-slate-50 rounded-lg p-1">
             {[
-              { id: 'edit' as Tab, label: 'Edit Content', icon: <Edit3 className="w-3.5 h-3.5" /> },
-              { id: 'preview' as Tab, label: 'Preview', icon: <Eye className="w-3.5 h-3.5" /> },
+              { id: 'edit' as Tab, label: 'Edit Content', icon: <Edit3 className="w-5 h-5 sm:w-3.5 sm:h-3.5" /> },
+              { id: 'preview' as Tab, label: 'Preview', icon: <Eye className="w-5 h-5 sm:w-3.5 sm:h-3.5" /> },
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab.id
+                className={`flex items-center gap-2 px-4 sm:px-4 py-2.5 sm:py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab.id
                   ? 'bg-white text-teal-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
                   }`}
@@ -363,9 +363,14 @@ const CVEditor: React.FC<CVEditorProps> = ({
         {/* ── PREVIEW TAB ──────────────────────────────────────── */}
         {activeTab === 'preview' && (
           <div className="max-w-4xl mx-auto">
-            <div className="border border-gray-100 rounded-xl overflow-hidden">
-              <CVPreview cvData={cvData} template={selectedTemplate} />
+            <div className="border border-gray-100 rounded-xl bg-white shadow-sm overflow-x-auto relative">
+              <div className="min-w-[794px]">
+                <CVPreview cvData={cvData} template={selectedTemplate} />
+              </div>
             </div>
+            <p className="text-center text-xs text-slate-400 mt-4 sm:hidden">
+              Swipe horizontally to view the full document
+            </p>
           </div>
         )}
       </main>
