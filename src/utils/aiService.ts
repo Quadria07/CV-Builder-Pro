@@ -59,11 +59,11 @@ export async function optimizeCVForJob(cvText: string, jobDetails: string): Prom
     return ensureIds(result.data);
 }
 
-export async function analyzeCV(cvText: string): Promise<ATSScore> {
+export async function analyzeCV(cvText: string, jobDescription?: string): Promise<ATSScore> {
     const response = await fetch(`${API_BASE}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cvText }),
+        body: JSON.stringify({ cvText, jobDescription }),
     });
     if (!response.ok) {
         const err = await response.json().catch(() => ({ error: 'Request failed' }));

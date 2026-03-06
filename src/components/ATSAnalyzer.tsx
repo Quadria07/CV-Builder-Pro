@@ -42,6 +42,7 @@ function cvDataToText(cv: CVData): string {
 const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData }) => {
     const [result, setResult] = useState<ATSScore | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [jobDescription, setJobDescription] = useState('');
     const { showToast } = useToast();
 
     const handleAnalyze = async () => {
@@ -52,7 +53,7 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData }) => {
         }
         setIsLoading(true);
         try {
-            const score = await analyzeCV(text);
+            const score = await analyzeCV(text, jobDescription);
             setResult(score);
             showToast('ATS analysis complete!', 'success');
         } catch (err) {
@@ -68,21 +69,33 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData }) => {
 
     if (!result) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mb-5">
+            <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mb-4">
                     <BarChart3 className="w-8 h-8 text-teal-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-800 mb-2">ATS Score and Feedback</h3>
-                <p className="text-slate-500 text-sm max-w-sm mb-8 leading-relaxed">
-                    Get an instant score on how well your CV will perform with applicant tracking systems,
-                    plus specific tips to improve it.
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">ATS Score & Keyword Match</h3>
+                <p className="text-slate-500 text-sm max-w-sm mb-6 leading-relaxed">
+                    Paste the job description below. We will score your experience against the requirements and keyword patterns.
                 </p>
+                <div className="w-full max-w-lg mb-6 text-left">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5 flex items-center justify-between">
+                        <span>Job Description</span>
+                        <span className="text-slate-400 text-xs font-normal">Optional</span>
+                    </label>
+                    <textarea
+                        value={jobDescription}
+                        onChange={(e) => setJobDescription(e.target.value)}
+                        placeholder="Paste the target job description here..."
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent text-sm bg-white"
+                        rows={5}
+                    />
+                </div>
                 <button
                     onClick={handleAnalyze}
-                    className="flex items-center gap-2 bg-teal-500 text-white px-8 py-3.5 rounded-xl font-medium hover:bg-teal-600 transition-colors"
+                    className="flex items-center gap-2 bg-teal-500 text-white px-8 py-3 rounded-xl font-medium hover:bg-teal-600 transition-colors"
                 >
                     <Sparkles className="w-4 h-4" />
-                    Analyze My CV
+                    Analyze Resume
                     <ArrowRight className="w-4 h-4" />
                 </button>
             </div>
@@ -187,13 +200,13 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData }) => {
             </div>
 
             {/* Re-analyze */}
-            <div className="text-center">
+            <div className="text-center pt-2">
                 <button
-                    onClick={handleAnalyze}
+                    onClick={() => setResult(null)}
                     className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-teal-600 transition-colors"
                 >
                     <RefreshCw className="w-3.5 h-3.5" />
-                    Re-analyze
+                    Analyze Another Job
                 </button>
             </div>
         </div>
