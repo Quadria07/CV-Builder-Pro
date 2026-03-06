@@ -342,12 +342,15 @@ const CVEditor: React.FC<CVEditorProps> = ({
               </div>
             </div>
 
-            {/* Live Preview - hidden on mobile by default, shown sticky on lg */}
+            {/* Live Preview - sticky scaled panel on desktop */}
             <div className="order-1 lg:order-2 hidden lg:block">
               <div className="sticky top-24">
                 <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Live Preview</p>
-                <div className="border border-gray-100 rounded-xl overflow-hidden max-h-[80vh] overflow-y-auto">
-                  <CVPreview cvData={cvData} template={selectedTemplate} />
+                <div className="border border-gray-100 rounded-xl overflow-hidden max-h-[80vh] overflow-y-auto bg-white">
+                  {/* Scale the 794px CV down so it fits the ~50% column without clipping */}
+                  <div style={{ width: '794px', transform: 'scale(0.62)', transformOrigin: 'top left', marginBottom: 'calc((0.62 - 1) * 100%)' }}>
+                    <CVPreview cvData={cvData} template={selectedTemplate} />
+                  </div>
                 </div>
               </div>
             </div>
