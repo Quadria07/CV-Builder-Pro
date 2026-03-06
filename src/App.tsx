@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import HomePage from './components/HomePage';
 import CVEditor from './components/CVEditor';
+import { ToastProvider } from './components/ToastProvider';
 import { CVData } from './types/cv';
 
 function App() {
@@ -8,18 +9,12 @@ function App() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('classic');
   const [startWithAI, setStartWithAI] = useState(false);
   const [cvData, setCvData] = useState<CVData>({
-    personalInfo: {
-      name: '',
-      address: '',
-      phone: '',
-      email: '',
-      summary: ''
-    },
+    personalInfo: { name: '', address: '', phone: '', email: '', summary: '' },
     skills: [],
     workHistory: [],
     education: [],
     interests: [],
-    references: 'Available on request'
+    references: 'Available on request',
   });
 
   const handleTemplateSelect = (templateId: string) => {
@@ -38,19 +33,21 @@ function App() {
     setStartWithAI(false);
   };
 
-  if (currentPage === 'home') {
-    return <HomePage onTemplateSelect={handleTemplateSelect} onStartAI={handleStartAI} />;
-  }
-
   return (
-    <CVEditor
-      selectedTemplate={selectedTemplate}
-      cvData={cvData}
-      setCvData={setCvData}
-      onBackToHome={handleBackToHome}
-      onTemplateChange={setSelectedTemplate}
-      initialTab={startWithAI ? 'ai' : 'edit'}
-    />
+    <ToastProvider>
+      {currentPage === 'home' ? (
+        <HomePage onTemplateSelect={handleTemplateSelect} onStartAI={handleStartAI} />
+      ) : (
+        <CVEditor
+          selectedTemplate={selectedTemplate}
+          cvData={cvData}
+          setCvData={setCvData}
+          onBackToHome={handleBackToHome}
+          onTemplateChange={setSelectedTemplate}
+          initialTab={startWithAI ? 'ai' : 'edit'}
+        />
+      )}
+    </ToastProvider>
   );
 }
 

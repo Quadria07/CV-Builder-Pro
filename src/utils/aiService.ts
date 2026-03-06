@@ -1,4 +1,5 @@
 import { CVData } from '../types/cv';
+import { ATSScore, ATSResponse } from '../types/ats';
 
 const API_BASE = import.meta.env.VITE_API_URL
     ? `${import.meta.env.VITE_API_URL}/api/ai`
@@ -34,39 +35,41 @@ export async function generateCVFromPrompt(prompt: string): Promise<CVData> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
     });
-
     if (!response.ok) {
         const err = await response.json().catch(() => ({ error: 'Request failed' }));
         throw new Error(err.error || `Server error (${response.status})`);
     }
-
     const result: AIResponse = await response.json();
-    if (!result.success || !result.data) {
-        throw new Error(result.error || 'Failed to generate CV data.');
-    }
-
+    if (!result.success || !result.data) throw new Error(result.error || 'Failed to generate CV data.');
     return ensureIds(result.data);
 }
 
-export async function optimizeCVForJob(
-    cvText: string,
-    jobDetails: string
-): Promise<CVData> {
+export async function optimizeCVForJob(cvText: string, jobDetails: string): Promise<CVData> {
     const response = await fetch(`${API_BASE}/optimize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cvText, jobDetails }),
     });
-
     if (!response.ok) {
         const err = await response.json().catch(() => ({ error: 'Request failed' }));
         throw new Error(err.error || `Server error (${response.status})`);
     }
-
     const result: AIResponse = await response.json();
-    if (!result.success || !result.data) {
-        throw new Error(result.error || 'Failed to optimize CV.');
-    }
-
+    if (!result.success || !result.data) throw new Error(result.error || 'Failed to optimize CV.');
     return ensureIds(result.data);
+}
+
+export async function analyzeCV(cvText: string): Promise<ATSScore> {
+    const response = await fetch(`${API_BASE}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cvText }),
+    });
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(err.error || `Server error (${response.status})`);
+    }
+    const result: ATSResponse = await response.json();
+    if (!result.success || !result.data) throw new Error(result.error || 'Failed to analyze CV.');
+    return result.data;
 }
