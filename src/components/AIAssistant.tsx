@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
-import { Sparkles, FileSearch, Loader2, Wand2, Target } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Sparkles, FileSearch, Loader2, Wand2, Target, Upload, FileText } from 'lucide-react';
 import { CVData } from '../types/cv';
 import { generateCVFromPrompt, optimizeCVForJob } from '../utils/aiService';
 import { useToast } from './ToastProvider';
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface AIAssistantProps {
     onCVGenerated: (data: CVData) => void;
@@ -15,7 +19,58 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
     const [cvText, setCvText] = useState('');
     const [jobDetails, setJobDetails] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadTarget, setUploadTarget] = useState<'prompt' | 'cvText' | 'jobDetails' | null>(null);
     const { showToast } = useToast();
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !uploadTarget) return;
+
+        setIsUploading(true);
+        try {
+            let extractedText = '';
+            const arrayBuffer = await file.arrayBuffer();
+
+            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map((item: any) => item.str).join(' ');
+                    extractedText += pageText + '\n\n';
+                }
+            } else if (
+                file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                file.name.toLowerCase().endsWith('.docx')
+            ) {
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                extractedText = result.value;
+            } else {
+                throw new Error('Unsupported file type. Please upload a PDF or DOCX file.');
+            }
+
+            if (!extractedText.trim()) throw new Error('Could not extract any text from this file.');
+
+            if (uploadTarget === 'prompt') setPrompt(extractedText);
+            else if (uploadTarget === 'cvText') setCvText(extractedText);
+            else if (uploadTarget === 'jobDetails') setJobDetails(extractedText);
+
+            showToast('Document text extracted successfully!', 'success');
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : 'Failed to read file.', 'error');
+        } finally {
+            setIsUploading(false);
+            setUploadTarget(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const triggerUpload = (target: 'prompt' | 'cvText' | 'jobDetails') => {
+        setUploadTarget(target);
+        fileInputRef.current?.click();
+    };
 
     const handleGenerate = async () => {
         if (!prompt.trim()) { showToast('Please describe yourself and your experience.', 'info'); return; }
@@ -73,13 +128,23 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
                 <div className="p-5 sm:p-6">
                     {activeMode === 'generate' ? (
                         <div className="space-y-4">
-                            <div>
-                                <h3 className="text-base font-semibold text-slate-800 mb-1 flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-teal-500" /> Create Your CV with AI
-                                </h3>
-                                <p className="text-sm text-slate-500">
-                                    Describe your background, experience, skills, and education. The more detail, the better your CV.
-                                </p>
+                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                                <div>
+                                    <h3 className="text-base font-semibold text-slate-800 mb-1 flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-teal-500" /> Create Your CV with AI
+                                    </h3>
+                                    <p className="text-sm text-slate-500">
+                                        Describe your background, or upload your old CV directly.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => triggerUpload('prompt')}
+                                    disabled={isLoading || isUploading}
+                                    className="flex items-center gap-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors whitespace-nowrap"
+                                >
+                                    {isUploading && uploadTarget === 'prompt' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                                    Upload PDF/DOCX
+                                </button>
                             </div>
                             <textarea
                                 value={prompt}
@@ -112,12 +177,32 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1.5">Your Current CV</label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-sm font-medium text-slate-700">Your Current CV</label>
+                                    <button
+                                        onClick={() => triggerUpload('cvText')}
+                                        disabled={isLoading || isUploading}
+                                        className="flex items-center gap-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-600 px-2.5 py-1 rounded hover:bg-slate-100 transition-colors"
+                                    >
+                                        {isUploading && uploadTarget === 'cvText' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                                        Upload File
+                                    </button>
+                                </div>
                                 <textarea value={cvText} onChange={e => setCvText(e.target.value)} rows={8} maxLength={15000} className={textareaCls} placeholder="Paste your entire current CV/resume text here..." disabled={isLoading} />
                                 <span className="text-xs text-slate-400">{cvText.length}/15000 characters</span>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1.5">Job Description</label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-sm font-medium text-slate-700">Job Description</label>
+                                    <button
+                                        onClick={() => triggerUpload('jobDetails')}
+                                        disabled={isLoading || isUploading}
+                                        className="flex items-center gap-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-600 px-2.5 py-1 rounded hover:bg-slate-100 transition-colors"
+                                    >
+                                        {isUploading && uploadTarget === 'jobDetails' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                                        Upload File
+                                    </button>
+                                </div>
                                 <textarea value={jobDetails} onChange={e => setJobDetails(e.target.value)} rows={8} maxLength={10000} className={textareaCls} placeholder="Paste the full job description here..." disabled={isLoading} />
                                 <span className="text-xs text-slate-400">{jobDetails.length}/10000 characters</span>
                             </div>
@@ -159,6 +244,13 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
                     </div>
                 </div>
             )}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+            />
         </div>
     );
 };
