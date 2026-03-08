@@ -4,9 +4,10 @@ import { CVData } from '../types/cv';
 import { generateCVFromPrompt, optimizeCVForJob } from '../utils/aiService';
 import { useToast } from './ToastProvider';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import mammoth from 'mammoth';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 interface AIAssistantProps {
     onCVGenerated: (data: CVData) => void;
