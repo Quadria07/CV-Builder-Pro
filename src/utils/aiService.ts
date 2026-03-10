@@ -73,3 +73,18 @@ export async function analyzeCV(cvText: string, jobDescription?: string): Promis
     if (!result.success || !result.data) throw new Error(result.error || 'Failed to analyze CV.');
     return result.data;
 }
+
+export async function fixCVWithAI(cvText: string, atsFeedback: string, jobDescription?: string): Promise<CVData> {
+    const response = await fetch(`${API_BASE}/fix`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cvText, atsFeedback, jobDescription }),
+    });
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(err.error || `Server error (${response.status})`);
+    }
+    const result: AIResponse = await response.json();
+    if (!result.success || !result.data) throw new Error(result.error || 'Failed to fix CV.');
+    return ensureIds(result.data);
+}

@@ -96,6 +96,12 @@ const CVEditor: React.FC<CVEditorProps> = ({
     showToast('CV generated! Review and refine below.', 'success');
   };
 
+  const handleCVFixed = (data: CVData) => {
+    setCvData(data);
+    setOpenPanel(null);
+    showToast('CV automatically fixed based on ATS feedback!', 'success');
+  };
+
   const togglePanel = (panel: Panel) =>
     setOpenPanel(prev => (prev === panel ? null : panel));
 
@@ -215,7 +221,7 @@ const CVEditor: React.FC<CVEditorProps> = ({
                       </button>
                     </div>
                     <div className="px-4 pb-4">
-                      <ATSAnalyzer cvData={cvData} compact onFix={() => setOpenPanel('ai')} />
+                      <ATSAnalyzer cvData={cvData} compact onFix={handleCVFixed} />
                     </div>
                   </div>
                 )}

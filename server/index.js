@@ -83,6 +83,22 @@ function validateOptimizeRequest(req, res, next) {
   next();
 }
 
+function validateFixRequest(req, res, next) {
+  const { cvText, atsFeedback } = req.body;
+  if (!cvText || typeof cvText !== 'string' || cvText.trim().length === 0) {
+    return res.status(400).json({ error: 'CV text is required.' });
+  }
+  if (!atsFeedback || typeof atsFeedback !== 'string') {
+    return res.status(400).json({ error: 'ATS feedback is required.' });
+  }
+  req.body.cvText = sanitizeString(cvText);
+  req.body.atsFeedback = sanitizeString(atsFeedback);
+  if (req.body.jobDescription) {
+    req.body.jobDescription = sanitizeString(req.body.jobDescription);
+  }
+  next();
+}
+
 function validateAnalyzeRequest(req, res, next) {
   const { cvText, jobDescription } = req.body;
   if (!cvText || typeof cvText !== 'string' || cvText.trim().length === 0) {
@@ -218,6 +234,27 @@ ${CV_STRUCTURE_PROMPT}`
   } catch (error) {
     console.error('[AI Optimize Error]:', error.message);
     res.status(500).json({ error: error.message || 'Failed to optimize CV.' });
+  }
+});
+
+app.post('/api/ai/fix', validateFixRequest, async (req, res) => {
+  try {
+    const { cvText, atsFeedback, jobDescription } = req.body;
+    let systemContent = `You are an expert CV/resume optimizer. Take the user's CV and the ATS feedback, and comprehensively rewrite the CV to address all the "Improvements" and errors mentioned.
+Maintain the original sections but improve bullet points, phrasing, skills, and the summary.
+${jobDescription ? `Crucially, make sure it perfectly targets this Job Description: ${jobDescription}\n` : ''}
+${CV_STRUCTURE_PROMPT}`;
+
+    const messages = [
+      { role: 'system', content: systemContent },
+      { role: 'user', content: `Here is the ATS scanner feedback on what is wrong with this CV:\n\n${atsFeedback}\n\nHere is my current CV (in internal JSON structure):\n\n${cvText}\n\nPlease output the fully fixed CV JSON addressing these errors completely.` }
+    ];
+
+    const cvData = await callGroq(messages);
+    res.json({ success: true, data: cvData });
+  } catch (error) {
+    console.error('[AI Fix Error]:', error.message);
+    res.status(500).json({ error: error.message || 'Failed to automatically fix CV.' });
   }
 });
 

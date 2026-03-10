@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { BarChart3, CheckCircle, AlertTriangle, Sparkles, ArrowRight, RefreshCw } from 'lucide-react';
-import { analyzeCV } from '../utils/aiService';
+import { BarChart3, CheckCircle, AlertTriangle, Sparkles, ArrowRight, RefreshCw, Loader2 } from 'lucide-react';
+import { analyzeCV, fixCVWithAI } from '../utils/aiService';
 import { ATSScore } from '../types/ats';
 import { ATSSkeleton } from './Skeletons';
 import { useToast } from './ToastProvider';
@@ -9,7 +9,7 @@ import { CVData } from '../types/cv';
 interface ATSAnalyzerProps {
     cvData: CVData;
     compact?: boolean;
-    onFix?: () => void;
+    onFix?: (updatedCV: CVData) => void;
 }
 
 function scoreColor(score: number, max: number) {
@@ -43,6 +43,7 @@ function cvDataToText(cv: CVData): string {
 const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData, onFix }) => {
     const [result, setResult] = useState<ATSScore | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isFixing, setIsFixing] = useState(false);
     const [jobDescription, setJobDescription] = useState('');
     const { showToast } = useToast();
 
@@ -61,6 +62,23 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData, onFix }) => {
             showToast(err instanceof Error ? err.message : 'Analysis failed. Please try again.', 'error');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleFix = async () => {
+        if (!result || !onFix) return;
+        setIsFixing(true);
+        try {
+            const rawCV = JSON.stringify(cvData);
+            const feedbackText = `Improvements Needed: ${result.improvements.join(', ')}\n\nMissing Skills/Tips: ${result.breakdown.filter(b => b.score < b.max).map(b => b.tip).join('; ')}`;
+
+            const updatedData = await fixCVWithAI(rawCV, feedbackText, jobDescription);
+            onFix(updatedData);
+            setResult(null);
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : 'Failed to fix CV. Please try again.', 'error');
+        } finally {
+            setIsFixing(false);
         }
     };
 
@@ -204,16 +222,17 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData, onFix }) => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 {onFix && (
                     <button
-                        onClick={onFix}
-                        className="flex items-center justify-center gap-2 w-full sm:w-auto bg-teal-500 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-teal-600 transition-colors"
+                        onClick={handleFix}
+                        disabled={isFixing || isLoading}
+                        className="flex items-center justify-center gap-2 w-full sm:w-auto bg-teal-500 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-teal-600 transition-colors disabled:opacity-50"
                     >
-                        <Sparkles className="w-4 h-4 text-teal-100" />
-                        Fix with AI
+                        {isFixing ? <Loader2 className="w-4 h-4 text-teal-100 animate-spin" /> : <Sparkles className="w-4 h-4 text-teal-100" />}
+                        {isFixing ? 'Fixing...' : 'Fix with AI'}
                     </button>
                 )}
                 <button
                     onClick={handleAnalyze}
-                    disabled={isLoading}
+                    disabled={isLoading || isFixing}
                     className="flex items-center justify-center gap-2 w-full sm:w-auto bg-slate-100 text-slate-700 px-5 py-2.5 rounded-xl font-medium hover:bg-slate-200 transition-colors disabled:opacity-50"
                 >
                     <RefreshCw className="w-4 h-4" />
