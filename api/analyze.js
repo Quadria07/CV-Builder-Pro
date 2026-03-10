@@ -36,7 +36,7 @@ module.exports = async function handler(req, res) {
 
         const cleanCV = cvText.trim().slice(0, MAX_CV_LENGTH);
         const userPrompt = jobDescription?.trim()
-            ? `Please analyze this CV against the following Job Description:\n\n[JOB DESCRIPTION]\n${jobDescription.trim().slice(0, 5000)}\n\n[CV]\n${cleanCV}`
+            ? `Please analyze this CV against the following Job Description:\n\n[JOB DESCRIPTION]\n${jobDescription.trim().slice(0, 15000)}\n\n[CV]\n${cleanCV}`
             : `Please analyze this CV for general ATS compatibility:\n\n[CV]\n${cleanCV}`;
 
         const messages = [
