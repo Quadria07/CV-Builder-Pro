@@ -9,6 +9,7 @@ import { CVData } from '../types/cv';
 interface ATSAnalyzerProps {
     cvData: CVData;
     compact?: boolean;
+    onFix?: () => void;
 }
 
 function scoreColor(score: number, max: number) {
@@ -39,7 +40,7 @@ function cvDataToText(cv: CVData): string {
     return lines.filter(Boolean).join('\n');
 }
 
-const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData }) => {
+const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData, onFix }) => {
     const [result, setResult] = useState<ATSScore | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [jobDescription, setJobDescription] = useState('');
@@ -199,13 +200,29 @@ const ATSAnalyzer: React.FC<ATSAnalyzerProps> = ({ cvData }) => {
                 </div>
             </div>
 
-            {/* Re-analyze */}
-            <div className="text-center pt-2">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                {onFix && (
+                    <button
+                        onClick={onFix}
+                        className="flex items-center justify-center gap-2 w-full sm:w-auto bg-teal-500 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-teal-600 transition-colors"
+                    >
+                        <Sparkles className="w-4 h-4 text-teal-100" />
+                        Fix with AI
+                    </button>
+                )}
+                <button
+                    onClick={handleAnalyze}
+                    disabled={isLoading}
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto bg-slate-100 text-slate-700 px-5 py-2.5 rounded-xl font-medium hover:bg-slate-200 transition-colors disabled:opacity-50"
+                >
+                    <RefreshCw className="w-4 h-4" />
+                    Re-analyze
+                </button>
                 <button
                     onClick={() => setResult(null)}
-                    className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-teal-600 transition-colors"
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto bg-white border border-slate-200 text-slate-600 px-5 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition-colors"
                 >
-                    <RefreshCw className="w-3.5 h-3.5" />
                     Analyze Another Job
                 </button>
             </div>

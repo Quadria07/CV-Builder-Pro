@@ -151,13 +151,13 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
                                 value={prompt}
                                 onChange={e => setPrompt(e.target.value)}
                                 rows={compact ? 5 : 10}
-                                maxLength={5000}
+                                maxLength={15000}
                                 className={textareaCls}
                                 placeholder={`Example: I'm a software engineer with 5 years of experience specialising in React and Node.js. I work at a startup where I lead frontend development. BSc Computer Science from University of Lagos. Key achievement: built a real-time dashboard that increased engagement by 40%.`}
                                 disabled={isLoading}
                             />
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                <span className="text-xs text-slate-400">{prompt.length}/5000 characters</span>
+                                <span className="text-xs text-slate-400">{prompt.length}/15000 characters</span>
                                 <button
                                     onClick={handleGenerate}
                                     disabled={isLoading || !prompt.trim()}
@@ -204,8 +204,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
                                         Upload File
                                     </button>
                                 </div>
-                                <textarea value={jobDetails} onChange={e => setJobDetails(e.target.value)} rows={8} maxLength={10000} className={textareaCls} placeholder="Paste the full job description here..." disabled={isLoading} />
-                                <span className="text-xs text-slate-400">{jobDetails.length}/10000 characters</span>
+                                <textarea value={jobDetails} onChange={e => setJobDetails(e.target.value)} rows={8} maxLength={15000} className={textareaCls} placeholder="Paste the full job description here..." disabled={isLoading} />
+                                <span className="text-xs text-slate-400">{jobDetails.length}/15000 characters</span>
                             </div>
                             <div className="flex justify-end">
                                 <button

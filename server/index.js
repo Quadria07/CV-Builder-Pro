@@ -43,9 +43,9 @@ const aiLimiter = rateLimit({
 app.use('/api/ai', aiLimiter);
 
 // ─── Input Validation ─────────────────────────────────────────────────
-const MAX_PROMPT_LENGTH = 5000;
+const MAX_PROMPT_LENGTH = 15000;
 const MAX_CV_TEXT_LENGTH = 15000;
-const MAX_JOB_DETAILS_LENGTH = 10000;
+const MAX_JOB_DETAILS_LENGTH = 15000;
 
 function sanitizeString(input) {
   if (typeof input !== 'string') return '';
@@ -244,7 +244,7 @@ app.post('/api/ai/analyze', validateAnalyzeRequest, async (req, res) => {
 
     const cleanCV = cvText.trim().slice(0, MAX_CV_TEXT_LENGTH);
     const userPrompt = jobDescription?.trim()
-      ? `Please analyze this CV against the following Job Description:\n\n[JOB DESCRIPTION]\n${jobDescription.trim().slice(0, 5000)}\n\n[CV]\n${cleanCV}`
+      ? `Please analyze this CV against the following Job Description:\n\n[JOB DESCRIPTION]\n${jobDescription.trim().slice(0, MAX_JOB_DETAILS_LENGTH)}\n\n[CV]\n${cleanCV}`
       : `Please analyze this CV for general ATS compatibility:\n\n[CV]\n${cleanCV}`;
 
     const messages = [

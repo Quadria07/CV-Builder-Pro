@@ -51,12 +51,12 @@ const CVEditor: React.FC<CVEditorProps> = ({
     setCvData({ ...cvData, personalInfo: { ...cvData.personalInfo, [field]: value } });
 
   const handleSkillsChange = (v: string) =>
-    setCvData({ ...cvData, skills: v.split('\n').filter(s => s.trim()) });
+    setCvData({ ...cvData, skills: v.split('\n') });
 
   const handleWorkChange = (index: number, field: string, value: string | string[]) => {
     const updated = [...cvData.workHistory];
     if (field === 'responsibilities') {
-      updated[index] = { ...updated[index], responsibilities: typeof value === 'string' ? value.split('\n').filter(r => r.trim()) : value };
+      updated[index] = { ...updated[index], responsibilities: typeof value === 'string' ? value.split('\n') : value };
     } else {
       updated[index] = { ...updated[index], [field]: value as string };
     }
@@ -76,7 +76,7 @@ const CVEditor: React.FC<CVEditorProps> = ({
   const removeEdu = (i: number) => setCvData({ ...cvData, education: cvData.education.filter((_, idx) => idx !== i) });
 
   const handleInterestsChange = (v: string) =>
-    setCvData({ ...cvData, interests: v.split('\n').filter(i => i.trim()) });
+    setCvData({ ...cvData, interests: v.split('\n') });
 
   const handleDownloadPDF = async () => {
     setIsGenerating(true);
@@ -215,7 +215,7 @@ const CVEditor: React.FC<CVEditorProps> = ({
                       </button>
                     </div>
                     <div className="px-4 pb-4">
-                      <ATSAnalyzer cvData={cvData} compact />
+                      <ATSAnalyzer cvData={cvData} compact onFix={() => setOpenPanel('ai')} />
                     </div>
                   </div>
                 )}
