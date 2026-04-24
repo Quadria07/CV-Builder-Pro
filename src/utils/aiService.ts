@@ -23,6 +23,18 @@ function ensureIds(data: CVData): CVData {
             ...e,
             id: e.id || Date.now().toString() + i,
         })),
+        projects: (data.projects || []).map((p, i) => ({
+            ...p,
+            id: p.id || Date.now().toString() + i,
+        })),
+        languages: (data.languages || []).map((l, i) => ({
+            ...l,
+            id: l.id || Date.now().toString() + i,
+        })),
+        achievements: (data.achievements || []).map((a, i) => ({
+            ...a,
+            id: a.id || Date.now().toString() + i,
+        })),
         skills: data.skills || [],
         interests: data.interests || [],
         references: data.references || 'Available on request',

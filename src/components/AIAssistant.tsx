@@ -1,24 +1,104 @@
 import React, { useState, useRef } from 'react';
-import { Sparkles, FileSearch, Loader2, Wand2, Target, Upload, FileText } from 'lucide-react';
+import { Sparkles, FileSearch, Loader2, Wand2, Target, Upload } from 'lucide-react';
 import { CVData } from '../types/cv';
 import { generateCVFromPrompt, optimizeCVForJob } from '../utils/aiService';
 import { useToast } from './ToastProvider';
+import { analyticsEvents } from '../utils/analytics';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import mammoth from 'mammoth';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
+// Helper function to convert CVData to text format
+function formatCVToText(cv: CVData): string {
+    let text = '';
+    
+    // Personal Info
+    const { name, email, phone, address, summary } = cv.personalInfo;
+    if (name) text += `${name}\n`;
+    if (email) text += `Email: ${email}\n`;
+    if (phone) text += `Phone: ${phone}\n`;
+    if (address) text += `Address: ${address}\n`;
+    if (summary) text += `\nSummary:\n${summary}\n`;
+    
+    // Skills
+    if (cv.skills && cv.skills.length > 0) {
+        text += `\nSkills:\n${cv.skills.join(', ')}\n`;
+    }
+    
+    // Work History
+    if (cv.workHistory && cv.workHistory.length > 0) {
+        text += `\nWork Experience:\n`;
+        cv.workHistory.forEach(work => {
+            text += `\n${work.position} at ${work.company}\n${work.duration}\n`;
+            if (work.responsibilities && work.responsibilities.length > 0) {
+                work.responsibilities.forEach(resp => {
+                    text += `• ${resp}\n`;
+                });
+            }
+        });
+    }
+    
+    // Education
+    if (cv.education && cv.education.length > 0) {
+        text += `\nEducation:\n`;
+        cv.education.forEach(edu => {
+            text += `\n${edu.degree} from ${edu.institution}\n${edu.duration}\n`;
+        });
+    }
+    
+    // Projects
+    if (cv.projects && cv.projects.length > 0) {
+        text += `\nProjects:\n`;
+        cv.projects.forEach(proj => {
+            text += `\n${proj.title}\n${proj.description}`;
+            if (proj.technologies) text += `\nTechnologies: ${proj.technologies.join(', ')}`;
+            text += '\n';
+        });
+    }
+    
+    // Languages
+    if (cv.languages && cv.languages.length > 0) {
+        text += `\nLanguages:\n`;
+        cv.languages.forEach(lang => {
+            text += `${lang.name} (${lang.proficiency})\n`;
+        });
+    }
+    
+    // Interests
+    if (cv.interests && cv.interests.length > 0) {
+        text += `\nInterests:\n${cv.interests.join(', ')}\n`;
+    }
+    
+    // Achievements
+    if (cv.achievements && cv.achievements.length > 0) {
+        text += `\nAchievements & Awards:\n`;
+        cv.achievements.forEach(achievement => {
+            text += `\n${achievement.title}\n${achievement.description}\n`;
+        });
+    }
+    
+    // References
+    if (cv.references) {
+        text += `\nReferences:\n${cv.references}\n`;
+    }
+    
+    return text;
+}
+
 interface AIAssistantProps {
     onCVGenerated: (data: CVData) => void;
+    currentCV?: CVData;
     compact?: boolean;
 }
 
-const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = false }) => {
+const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, currentCV, compact = false }) => {
     const [activeMode, setActiveMode] = useState<'generate' | 'optimize'>('generate');
     const [prompt, setPrompt] = useState('');
     const [cvText, setCvText] = useState('');
     const [jobDetails, setJobDetails] = useState('');
+    const [useCurrentCV, setUseCurrentCV] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +108,14 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !uploadTarget) return;
+
+        // File size validation: max 20MB
+        const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+        if (file.size > MAX_FILE_SIZE) {
+            showToast('File size exceeds 20MB limit. Please upload a smaller file.', 'error');
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
 
         setIsUploading(true);
         try {
@@ -59,8 +147,11 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
             else if (uploadTarget === 'jobDetails') setJobDetails(extractedText);
 
             showToast('Document text extracted successfully!', 'success');
+            analyticsEvents.fileUploadSuccess(file.type === 'application/pdf' ? 'pdf' : 'docx');
         } catch (err) {
-            showToast(err instanceof Error ? err.message : 'Failed to read file.', 'error');
+            const errorMsg = err instanceof Error ? err.message : 'Failed to read file.';
+            showToast(errorMsg, 'error');
+            analyticsEvents.fileUploadError(errorMsg);
         } finally {
             setIsUploading(false);
             setUploadTarget(null);
@@ -76,11 +167,15 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
     const handleGenerate = async () => {
         if (!prompt.trim()) { showToast('Please describe yourself and your experience.', 'info'); return; }
         setIsLoading(true);
+        analyticsEvents.cvGenerateStart();
         try {
             const data = await generateCVFromPrompt(prompt);
             onCVGenerated(data);
+            analyticsEvents.cvGenerateSuccess();
         } catch (err) {
-            showToast(err instanceof Error ? err.message : 'Something went wrong.', 'error');
+            const errorMsg = err instanceof Error ? err.message : 'Something went wrong.';
+            showToast(errorMsg, 'error');
+            analyticsEvents.cvGenerateError(errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -90,11 +185,15 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
         if (!cvText.trim()) { showToast('Please paste your current CV.', 'info'); return; }
         if (!jobDetails.trim()) { showToast('Please paste the job description.', 'info'); return; }
         setIsLoading(true);
+        analyticsEvents.cvOptimizeStart();
         try {
             const data = await optimizeCVForJob(cvText, jobDetails);
             onCVGenerated(data);
+            analyticsEvents.cvOptimizeSuccess();
         } catch (err) {
-            showToast(err instanceof Error ? err.message : 'Something went wrong.', 'error');
+            const errorMsg = err instanceof Error ? err.message : 'Something went wrong.';
+            showToast(errorMsg, 'error');
+            analyticsEvents.cvOptimizeError(errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -180,14 +279,36 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onCVGenerated, compact = fals
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label className="block text-sm font-medium text-slate-700">Your Current CV</label>
-                                    <button
-                                        onClick={() => triggerUpload('cvText')}
-                                        disabled={isLoading || isUploading}
-                                        className="flex items-center gap-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-600 px-2.5 py-1 rounded hover:bg-slate-100 transition-colors"
-                                    >
-                                        {isUploading && uploadTarget === 'cvText' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                                        Upload File
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        {currentCV && (
+                                            <label className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={useCurrentCV}
+                                                    onChange={(e) => {
+                                                        setUseCurrentCV(e.target.checked);
+                                                        if (e.target.checked && currentCV) {
+                                                            // Convert currentCV to text format
+                                                            const cvTextContent = formatCVToText(currentCV);
+                                                            setCvText(cvTextContent);
+                                                        } else {
+                                                            setCvText('');
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                                                />
+                                                <span>Use current CV in editor</span>
+                                            </label>
+                                        )}
+                                        <button
+                                            onClick={() => triggerUpload('cvText')}
+                                            disabled={isLoading || isUploading || useCurrentCV}
+                                            className="flex items-center gap-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-600 px-2.5 py-1 rounded hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isUploading && uploadTarget === 'cvText' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                                            Upload File
+                                        </button>
+                                    </div>
                                 </div>
                                 <textarea value={cvText} onChange={e => setCvText(e.target.value)} rows={8} maxLength={15000} className={textareaCls} placeholder="Paste your entire current CV/resume text here..." disabled={isLoading} />
                                 <span className="text-xs text-slate-400">{cvText.length}/15000 characters</span>

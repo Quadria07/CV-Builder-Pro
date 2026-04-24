@@ -125,6 +125,60 @@ const MinimalTemplate: React.FC<MinimalTemplateProps> = ({ cvData }) => {
         </div>
       )}
 
+      {/* Projects */}
+      {cvData.projects && cvData.projects.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+            Projects
+          </h2>
+          <div className="space-y-4">
+            {cvData.projects.map((project) => (
+              <div key={project.id}>
+                <h3 className="font-semibold text-gray-900">{project.title}</h3>
+                {project.technologies && project.technologies.length > 0 && (
+                  <p className="text-xs text-gray-500 mb-1">{project.technologies.join(', ')}</p>
+                )}
+                <p className="text-gray-700 text-sm">{project.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Languages */}
+      {cvData.languages && cvData.languages.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+            Languages
+          </h2>
+          <div className="space-y-2">
+            {cvData.languages.map((language) => (
+              <div key={language.id} className="flex justify-between">
+                <span className="text-gray-700">{language.name}</span>
+                <span className="text-gray-500 text-sm">{language.proficiency}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements & Awards */}
+      {cvData.achievements && cvData.achievements.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+            Achievements & Awards
+          </h2>
+          <div className="space-y-3">
+            {cvData.achievements.map((achievement) => (
+              <div key={achievement.id}>
+                <h3 className="font-semibold text-gray-900">{achievement.title}</h3>
+                <p className="text-gray-700 text-sm">{achievement.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* References */}
       {cvData.references && (
         <div className="mb-12">

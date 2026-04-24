@@ -3,14 +3,16 @@ import html2canvas from 'html2canvas';
 import { CVData } from '../types/cv';
 
 export const generatePDF = async (cvData: CVData, templateName: string) => {
+  let clone: HTMLElement | null = null;
+  
   try {
     const element = document.getElementById('cv-preview');
     if (!element) {
-      throw new Error('CV preview element not found');
+      throw new Error('CV preview element not found. Please ensure the preview is rendered.');
     }
 
     // Clone element to avoid modifying the live DOM and completely bypass hidden/overflow issues on mobile
-    const clone = element.cloneNode(true) as HTMLElement;
+    clone = element.cloneNode(true) as HTMLElement;
 
     // Assign specific A4 dimensions and place safely off-screen
     clone.style.cssText = `
@@ -37,22 +39,26 @@ export const generatePDF = async (cvData: CVData, templateName: string) => {
 
     document.body.appendChild(clone);
 
-    // Wait for any layout changes to settle exactly layout
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Wait for any layout changes to settle
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create canvas from the CV preview element with optimized settings
-    const canvas = await html2canvas(clone, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      width: clone.scrollWidth || 794,
-      height: clone.scrollHeight || 1123,
-      windowWidth: clone.scrollWidth || 794,
-      windowHeight: clone.scrollHeight || 1123,
-    });
-
-    document.body.removeChild(clone);
+    let canvas: HTMLCanvasElement;
+    try {
+      canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: clone.scrollWidth || 794,
+        height: clone.scrollHeight || 1123,
+        windowWidth: clone.scrollWidth || 794,
+        windowHeight: clone.scrollHeight || 1123,
+        logging: false,
+      });
+    } catch (canvasError) {
+      throw new Error(`Failed to render CV to canvas: ${canvasError instanceof Error ? canvasError.message : 'Unknown error'}`);
+    }
 
     // Create PDF with A4 dimensions
     const pdf = new jsPDF({
@@ -65,7 +71,12 @@ export const generatePDF = async (cvData: CVData, templateName: string) => {
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
     // Convert canvas to image
-    const imgData = canvas.toDataURL('image/png', 1.0);
+    let imgData: string;
+    try {
+      imgData = canvas.toDataURL('image/png', 1.0);
+    } catch (imgError) {
+      throw new Error(`Failed to convert canvas to image: ${imgError instanceof Error ? imgError.message : 'Unknown error'}`);
+    }
 
     // Calculate scaling to fit A4 width
     const imgWidth = canvas.width;
@@ -106,6 +117,15 @@ export const generatePDF = async (cvData: CVData, templateName: string) => {
     pdf.save(filename);
   } catch (error) {
     console.error('Error generating PDF:', error);
-    throw error;
+    throw new Error(error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.');
+  } finally {
+    // Clean up cloned element
+    if (clone && clone.parentNode) {
+      try {
+        clone.parentNode.removeChild(clone);
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }
   }
 };

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Download, Eye, Edit3, Plus, Trash2,
-  Sparkles, BarChart3, Loader2, ChevronDown, Wand2, X, LayoutTemplate
+  Sparkles, BarChart3, Loader2, ChevronDown, Wand2, X, LayoutTemplate, MessageCircle, FileText
 } from 'lucide-react';
 import { CVData } from '../types/cv';
 import CVPreview from './CVPreview';
 import AIAssistant from './AIAssistant';
 import ATSAnalyzer from './ATSAnalyzer';
 import { generatePDF } from '../utils/pdfGenerator';
+import { generateWord } from '../utils/wordGenerator';
 import { useToast } from './ToastProvider';
+import { analyticsEvents } from '../utils/analytics';
 
 interface CVEditorProps {
   selectedTemplate: string;
@@ -16,6 +18,8 @@ interface CVEditorProps {
   setCvData: (data: CVData) => void;
   onBackToHome: () => void;
   onTemplateChange?: (templateId: string) => void;
+  onPDFDownloaded?: () => void;
+  onOpenFeedback?: () => void;
   initialTab?: 'edit' | 'preview';
   initialPanel?: 'ai' | 'ats' | null;
 }
@@ -33,6 +37,8 @@ const CVEditor: React.FC<CVEditorProps> = ({
   setCvData,
   onBackToHome,
   onTemplateChange,
+  onPDFDownloaded,
+  onOpenFeedback,
   initialTab = 'edit',
   initialPanel = null,
 }) => {
@@ -44,6 +50,7 @@ const CVEditor: React.FC<CVEditorProps> = ({
   // Scroll to top when the editor mounts
   useEffect(() => {
     window.scrollTo(0, 0);
+    analyticsEvents.editorPageView();
   }, []);
 
   /* ─── Data handlers ─────────────────────────────────────────── */
@@ -78,13 +85,63 @@ const CVEditor: React.FC<CVEditorProps> = ({
   const handleInterestsChange = (v: string) =>
     setCvData({ ...cvData, interests: v.split('\n') });
 
+  const handleProjectChange = (index: number, field: string, value: string | string[]) => {
+    const updated = [...cvData.projects];
+    if (field === 'technologies') {
+      updated[index] = { ...updated[index], technologies: typeof value === 'string' ? value.split(',').map(s => s.trim()) : value };
+    } else {
+      updated[index] = { ...updated[index], [field]: value as string };
+    }
+    setCvData({ ...cvData, projects: updated });
+  };
+
+  const addProject = () => setCvData({ ...cvData, projects: [...cvData.projects, { id: Date.now().toString(), title: '', description: '', technologies: [] }] });
+  const removeProject = (i: number) => setCvData({ ...cvData, projects: cvData.projects.filter((_, idx) => idx !== i) });
+
+  const handleLanguageChange = (index: number, field: string, value: string) => {
+    const updated = [...cvData.languages];
+    updated[index] = { ...updated[index], [field]: value };
+    setCvData({ ...cvData, languages: updated });
+  };
+
+  const addLanguage = () => setCvData({ ...cvData, languages: [...cvData.languages, { id: Date.now().toString(), name: '', proficiency: 'Intermediate' }] });
+  const removeLanguage = (i: number) => setCvData({ ...cvData, languages: cvData.languages.filter((_, idx) => idx !== i) });
+
+  const handleAchievementChange = (index: number, field: string, value: string) => {
+    const updated = [...cvData.achievements];
+    updated[index] = { ...updated[index], [field]: value };
+    setCvData({ ...cvData, achievements: updated });
+  };
+
+  const addAchievement = () => setCvData({ ...cvData, achievements: [...cvData.achievements, { id: Date.now().toString(), title: '', description: '' }] });
+  const removeAchievement = (i: number) => setCvData({ ...cvData, achievements: cvData.achievements.filter((_, idx) => idx !== i) });
+
   const handleDownloadPDF = async () => {
     setIsGenerating(true);
+    analyticsEvents.pdfDownloadStart(selectedTemplate);
     try {
       await generatePDF(cvData, selectedTemplate);
       showToast('PDF downloaded successfully!', 'success');
-    } catch {
-      showToast('Failed to generate PDF. Please try again.', 'error');
+      analyticsEvents.pdfDownloadSuccess(selectedTemplate);
+      // Trigger feedback modal auto-show after PDF download
+      onPDFDownloaded?.();
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      showToast(errorMsg || 'Failed to generate PDF. Please try again.', 'error');
+      analyticsEvents.pdfDownloadError(selectedTemplate, errorMsg);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadWord = async () => {
+    setIsGenerating(true);
+    try {
+      await generateWord(cvData, `${cvData.personalInfo.name || 'CV'}.docx`);
+      showToast('Word document downloaded successfully!', 'success');
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      showToast(errorMsg || 'Failed to generate Word document. Please try again.', 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -94,6 +151,7 @@ const CVEditor: React.FC<CVEditorProps> = ({
     setCvData(data);
     setOpenPanel(null);
     showToast('CV generated! Review and refine below.', 'success');
+    analyticsEvents.cvGenerateSuccess();
   };
 
   const handleCVFixed = (data: CVData) => {
@@ -141,15 +199,33 @@ const CVEditor: React.FC<CVEditorProps> = ({
             ))}
           </nav>
 
-          {/* Right: download */}
-          <button
-            onClick={handleDownloadPDF}
-            disabled={isGenerating}
-            className="flex items-center gap-1.5 bg-teal-500 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-600 transition-colors disabled:opacity-50 flex-shrink-0"
-          >
-            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            <span className="hidden sm:inline">{isGenerating ? 'Generating...' : 'Download PDF'}</span>
-          </button>
+          {/* Right: feedback & download */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onOpenFeedback}
+              className="flex items-center gap-1.5 border border-gray-200 text-slate-600 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:border-teal-300 hover:text-teal-600 transition-colors flex-shrink-0"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Feedback</span>
+            </button>
+            <button
+              onClick={handleDownloadWord}
+              disabled={isGenerating}
+              className="flex items-center gap-1.5 border border-gray-200 text-slate-600 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:border-teal-300 hover:text-teal-600 transition-colors disabled:opacity-50 flex-shrink-0"
+              title="Download as Word document"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Word</span>
+            </button>
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGenerating}
+              className="flex items-center gap-1.5 bg-teal-500 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-600 transition-colors disabled:opacity-50 flex-shrink-0"
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              <span className="hidden sm:inline">{isGenerating ? 'Generating...' : 'Download PDF'}</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -206,7 +282,7 @@ const CVEditor: React.FC<CVEditorProps> = ({
                       </button>
                     </div>
                     <div className="px-4 pb-4">
-                      <AIAssistant onCVGenerated={handleAICVGenerated} compact />
+                      <AIAssistant onCVGenerated={handleAICVGenerated} currentCV={cvData} compact />
                     </div>
                   </div>
                 )}
@@ -343,6 +419,78 @@ const CVEditor: React.FC<CVEditorProps> = ({
                 <h3 className="text-base font-semibold text-slate-800 mb-4">Interests</h3>
                 <label className={labelCls}>Interests / Hobbies (one per line)</label>
                 <textarea value={cvData.interests.join('\n')} onChange={e => handleInterestsChange(e.target.value)} rows={3} className={inputCls} placeholder={'Reading\nOpen source'} />
+              </div>
+
+              {/* Projects */}
+              <div className={cardCls}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-slate-800">Projects</h3>
+                  <button onClick={addProject} className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-teal-50 border border-teal-200 text-teal-700 rounded-lg hover:bg-teal-100 transition-colors">
+                    <Plus className="w-4 h-4" /> Add
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {cvData.projects.map((proj, idx) => (
+                    <div key={proj.id} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50">
+                      <div><label className={labelCls}>Project Title</label><input type="text" value={proj.title} onChange={e => handleProjectChange(idx, 'title', e.target.value)} className={inputCls} placeholder="Project name" /></div>
+                      <div><label className={labelCls}>Description</label><textarea value={proj.description} onChange={e => handleProjectChange(idx, 'description', e.target.value)} rows={3} className={inputCls} placeholder="What did you build and what impact did it have?" /></div>
+                      <div><label className={labelCls}>Technologies (comma-separated)</label><input type="text" value={proj.technologies?.join(', ') || ''} onChange={e => handleProjectChange(idx, 'technologies', e.target.value)} className={inputCls} placeholder="React, Node.js, MongoDB" /></div>
+                      <button onClick={() => removeProject(idx)} className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-1">
+                        <Trash2 className="w-4 h-4" /> Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Languages */}
+              <div className={cardCls}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-slate-800">Languages</h3>
+                  <button onClick={addLanguage} className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-teal-50 border border-teal-200 text-teal-700 rounded-lg hover:bg-teal-100 transition-colors">
+                    <Plus className="w-4 h-4" /> Add
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {cvData.languages.map((lang, idx) => (
+                    <div key={lang.id} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className={labelCls}>Language</label><input type="text" value={lang.name} onChange={e => handleLanguageChange(idx, 'name', e.target.value)} className={inputCls} placeholder="e.g., English" /></div>
+                        <div><label className={labelCls}>Proficiency</label><select value={lang.proficiency} onChange={e => handleLanguageChange(idx, 'proficiency', e.target.value)} className={inputCls}>
+                          <option>Basic</option>
+                          <option>Intermediate</option>
+                          <option>Advanced</option>
+                          <option>Fluent</option>
+                          <option>Native</option>
+                        </select></div>
+                      </div>
+                      <button onClick={() => removeLanguage(idx)} className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-1">
+                        <Trash2 className="w-4 h-4" /> Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Achievements & Awards */}
+              <div className={cardCls}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-slate-800">Achievements & Awards</h3>
+                  <button onClick={addAchievement} className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-teal-50 border border-teal-200 text-teal-700 rounded-lg hover:bg-teal-100 transition-colors">
+                    <Plus className="w-4 h-4" /> Add
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {cvData.achievements.map((achievement, idx) => (
+                    <div key={achievement.id} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50">
+                      <div><label className={labelCls}>Achievement Title</label><input type="text" value={achievement.title} onChange={e => handleAchievementChange(idx, 'title', e.target.value)} className={inputCls} placeholder="Award or achievement name" /></div>
+                      <div><label className={labelCls}>Description</label><textarea value={achievement.description} onChange={e => handleAchievementChange(idx, 'description', e.target.value)} rows={3} className={inputCls} placeholder="What was the achievement? When did you receive it?" /></div>
+                      <button onClick={() => removeAchievement(idx)} className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-1">
+                        <Trash2 className="w-4 h-4" /> Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* References */}

@@ -5,6 +5,41 @@ const MAX_PROMPT_LENGTH = 15000;
 const MAX_CV_TEXT_LENGTH = 15000;
 const MAX_JOB_DETAILS_LENGTH = 15000;
 
+// Simple rate limiter using IP + timestamp (in-memory)
+// Note: In production with multiple serverless instances, consider using Redis/external service
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 60 seconds
+const RATE_LIMIT_MAX = 10; // 10 requests per window
+
+function getClientIP(req) {
+  return (
+    req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+    req.headers['x-real-ip'] ||
+    req.connection?.remoteAddress ||
+    'unknown'
+  );
+}
+
+function checkRateLimit(clientIP) {
+  const now = Date.now();
+  const key = clientIP;
+
+  if (!rateLimitStore.has(key)) {
+    rateLimitStore.set(key, []);
+  }
+
+  const requests = rateLimitStore.get(key);
+  const recentRequests = requests.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+
+  if (recentRequests.length >= RATE_LIMIT_MAX) {
+    return false;
+  }
+
+  recentRequests.push(now);
+  rateLimitStore.set(key, recentRequests);
+  return true;
+}
+
 const CV_STRUCTURE_PROMPT = `You must respond ONLY with a valid JSON object matching this exact structure. No markdown, no explanation, only the JSON:
 {
   "personalInfo": {
@@ -32,7 +67,29 @@ const CV_STRUCTURE_PROMPT = `You must respond ONLY with a valid JSON object matc
       "duration": "string"
     }
   ],
+  "projects": [
+    {
+      "id": "unique string id",
+      "title": "string",
+      "description": "string (brief description of the project)",
+      "technologies": ["array of technologies used"]
+    }
+  ],
+  "languages": [
+    {
+      "id": "unique string id",
+      "name": "string (language name)",
+      "proficiency": "string (Basic | Intermediate | Advanced | Fluent | Native)"
+    }
+  ],
   "interests": ["string array"],
+  "achievements": [
+    {
+      "id": "unique string id",
+      "title": "string (achievement title)",
+      "description": "string (description of the achievement)"
+    }
+  ],
   "references": "Available on request"
 }`;
 
@@ -47,32 +104,46 @@ async function callGroq(messages) {
     throw new Error('AI service is not configured.');
   }
 
-  const response = await fetch(GROQ_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages,
-      temperature: 0.7,
-      max_tokens: 4096,
-      response_format: { type: 'json_object' },
-    }),
-  });
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-  if (!response.ok) {
-    const status = response.status;
-    if (status === 429) throw new Error('AI rate limit reached. Please try again shortly.');
-    if (status === 401) throw new Error('AI service authentication failed.');
-    throw new Error('AI service is temporarily unavailable.');
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages,
+        temperature: 0.7,
+        max_tokens: 4096,
+        response_format: { type: 'json_object' },
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      if (status === 429) throw new Error('AI rate limit reached. Please try again shortly.');
+      if (status === 401) throw new Error('AI service authentication failed.');
+      throw new Error('AI service is temporarily unavailable.');
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error('AI returned an empty response.');
+    return JSON.parse(content);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('AI request timed out. Please try again.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('AI returned an empty response.');
-  return JSON.parse(content);
 }
 
 module.exports = {
@@ -82,4 +153,6 @@ module.exports = {
   MAX_JOB_DETAILS_LENGTH,
   sanitizeString,
   callGroq,
+  getClientIP,
+  checkRateLimit,
 };

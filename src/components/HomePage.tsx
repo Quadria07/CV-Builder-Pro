@@ -2,14 +2,17 @@ import React from 'react';
 import {
   FileText, Download, Sparkles, ArrowRight, CheckCircle,
   Wand2, Target, Zap, Shield, Award,
-  PenTool, Layout, BookOpen
+  PenTool, Layout, BookOpen, Moon, Sun, MessageCircle
 } from 'lucide-react';
 import { Template } from '../types/cv';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import { useDarkMode } from './DarkModeProvider';
+import { analyticsEvents } from '../utils/analytics';
 
 interface HomePageProps {
   onTemplateSelect: (templateId: string) => void;
   onStartAI?: () => void;
+  onOpenFeedback?: () => void;
 }
 
 const templates: Template[] = [
@@ -75,7 +78,22 @@ function RevealSection({
   );
 }
 
-const HomePage: React.FC<HomePageProps> = ({ onTemplateSelect, onStartAI }) => {
+const HomePage: React.FC<HomePageProps> = ({ onTemplateSelect, onStartAI, onOpenFeedback }) => {
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+
+  React.useEffect(() => {
+    analyticsEvents.homePageView();
+  }, []);
+
+  const handleTemplateClick = (templateId: string) => {
+    analyticsEvents.templateSelected(templateId);
+    onTemplateSelect(templateId);
+  };
+
+  const handleAIClick = () => {
+    onStartAI?.();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-teal-50/30 to-white font-inter overflow-hidden">
       {/* Decorative background blobs */}
@@ -86,19 +104,38 @@ const HomePage: React.FC<HomePageProps> = ({ onTemplateSelect, onStartAI }) => {
       </div>
 
       {/* Header */}
-      <header className="relative z-20 bg-white/60 backdrop-blur-sm">
+      <header className="relative z-20 bg-white/60 backdrop-blur-sm dark:bg-slate-900/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <FileText className="w-5 h-5 text-teal-600" />
-              <span className="text-lg font-semibold text-slate-800 tracking-tight">CV Builder Pro</span>
+              <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <div className="flex flex-col">
+                <span className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">CV Builder Pro</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">v1.0</span>
+              </div>
             </div>
-            <button
-              onClick={onStartAI}
-              className="text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors"
-            >
-              Get Started
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleDarkMode}
+                className="text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors px-3 py-2 rounded-lg hover:bg-teal-50 dark:hover:bg-slate-800"
+                title="Toggle dark mode"
+              >
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={onOpenFeedback}
+                className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors px-3 py-2 rounded-lg hover:bg-teal-50 dark:hover:bg-slate-800"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Feedback</span>
+              </button>
+              <button
+                onClick={handleAIClick}
+                className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
+              >
+                Get Started
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -126,7 +163,7 @@ const HomePage: React.FC<HomePageProps> = ({ onTemplateSelect, onStartAI }) => {
           {/* CTAs */}
           <div className="hero-animate hero-animate-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <button
-              onClick={onStartAI}
+              onClick={handleAIClick}
               className="group flex items-center gap-2 bg-teal-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors"
             >
               <Sparkles className="w-5 h-5" />
@@ -269,7 +306,7 @@ const HomePage: React.FC<HomePageProps> = ({ onTemplateSelect, onStartAI }) => {
 
           <RevealSection type="reveal-scale" className="text-center mt-14">
             <button
-              onClick={onStartAI}
+              onClick={handleAIClick}
               className="group inline-flex items-center gap-2 bg-teal-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors"
             >
               <Sparkles className="w-5 h-5" />
@@ -362,7 +399,7 @@ const HomePage: React.FC<HomePageProps> = ({ onTemplateSelect, onStartAI }) => {
                     ))}
                   </div>
                   <button
-                    onClick={() => onTemplateSelect(template.id)}
+                    onClick={() => handleTemplateClick(template.id)}
                     className="w-full bg-teal-500 text-white py-3 px-4 rounded-xl font-medium hover:bg-teal-600 transition-colors flex items-center justify-center gap-2 group/btn"
                   >
                     <span>Use This Template</span>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Zap, Briefcase, GraduationCap, Heart, FileText } from 'lucide-react';
+import { User, Zap, Briefcase, GraduationCap, Heart, FileText, Code, Globe, Award } from 'lucide-react';
 import { CVData } from '../../types/cv';
 
 interface CreativeTemplateProps {
@@ -150,6 +150,75 @@ const CreativeTemplate: React.FC<CreativeTemplateProps> = ({ cvData }) => {
                 <span key={index} className="bg-gradient-to-r from-pink-400 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-medium">
                   {interest}
                 </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Projects */}
+        {cvData.projects && cvData.projects.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center mb-4">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
+                <Code className="w-4 h-4" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Projects</h2>
+            </div>
+            <div className="space-y-4">
+              {cvData.projects.map((project) => (
+                <div key={project.id} className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
+                  <h3 className="font-bold text-lg text-gray-900 mb-1">{project.title}</h3>
+                  {project.technologies && project.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {project.technologies.map((tech, idx) => (
+                        <span key={idx} className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-gray-700 text-sm">{project.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Languages */}
+        {cvData.languages && cvData.languages.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center mb-4">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white mr-3">
+                <Globe className="w-4 h-4" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Languages</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {cvData.languages.map((language) => (
+                <div key={language.id} className="bg-gradient-to-r from-green-400 to-teal-500 text-white rounded-lg p-3">
+                  <p className="font-semibold">{language.name}</p>
+                  <p className="text-sm text-green-50">{language.proficiency}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Achievements & Awards */}
+        {cvData.achievements && cvData.achievements.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center mb-4">
+              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white mr-3">
+                <Award className="w-4 h-4" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Achievements & Awards</h2>
+            </div>
+            <div className="space-y-3">
+              {cvData.achievements.map((achievement) => (
+                <div key={achievement.id} className="bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 rounded-lg p-4">
+                  <p className="font-bold text-sm mb-1">{achievement.title}</p>
+                  <p className="text-sm leading-relaxed">{achievement.description}</p>
+                </div>
               ))}
             </div>
           </div>

@@ -16,6 +16,7 @@
     "@vercel/analytics": "^1.6.1",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
+    "docx": "^9.6.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
@@ -23,9 +24,12 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.344.0",
+    "mammoth": "^1.11.0",
+    "pdfjs-dist": "^5.5.207",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-pdf": "^10.0.1"
+    "react-pdf": "^10.0.1",
+    "resend": "^6.9.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

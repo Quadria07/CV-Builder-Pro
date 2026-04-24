@@ -127,6 +127,62 @@ const ModernTemplate: React.FC<ModernTemplateProps> = ({ cvData }) => {
         </div>
       )}
 
+      {/* Projects */}
+      {cvData.projects && cvData.projects.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-purple-600 mb-3 border-l-4 border-purple-600 pl-4">
+            Projects
+          </h2>
+          {cvData.projects.map((project) => (
+            <div key={project.id} className="mb-6 bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-bold text-gray-900 text-lg mb-1">{project.title}</h3>
+              {project.technologies && project.technologies.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {project.technologies.map((tech, idx) => (
+                    <span key={idx} className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-gray-700 text-sm">{project.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Languages */}
+      {cvData.languages && cvData.languages.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-purple-600 mb-3 border-l-4 border-purple-600 pl-4">
+            Languages
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {cvData.languages.map((language) => (
+              <div key={language.id} className="flex items-center">
+                <div className="w-2 h-2 bg-purple-600 rounded-full mr-3"></div>
+                <span className="text-gray-700">{language.name} ({language.proficiency})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements & Awards */}
+      {cvData.achievements && cvData.achievements.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-purple-600 mb-3 border-l-4 border-purple-600 pl-4">
+            Achievements & Awards
+          </h2>
+          {cvData.achievements.map((achievement) => (
+            <div key={achievement.id} className="mb-4 bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-bold text-gray-900 mb-1">{achievement.title}</h3>
+              <p className="text-gray-700 text-sm">{achievement.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* References */}
       {cvData.references && (
         <div className="mb-8">

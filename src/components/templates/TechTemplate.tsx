@@ -150,6 +150,67 @@ const TechTemplate: React.FC<TechTemplateProps> = ({ cvData }) => {
         </div>
       )}
 
+      {/* Projects */}
+      {cvData.projects && cvData.projects.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-teal-600 mb-3 flex items-center">
+            <span className="text-gray-400 mr-2">{'// '}</span>
+            PROJECTS
+          </h2>
+          {cvData.projects.map((project) => (
+            <div key={project.id} className="bg-gray-50 p-4 rounded-lg mb-3 border-l-4 border-teal-600">
+              <h3 className="font-bold text-gray-900 mb-1">{project.title}</h3>
+              {project.technologies && project.technologies.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {project.technologies.map((tech, idx) => (
+                    <code key={idx} className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded">
+                      {tech}
+                    </code>
+                  ))}
+                </div>
+              )}
+              <p className="text-gray-700 text-sm">{project.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Languages */}
+      {cvData.languages && cvData.languages.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-teal-600 mb-3 flex items-center">
+            <span className="text-gray-400 mr-2">{'// '}</span>
+            LANGUAGES
+          </h2>
+          <div className="bg-gray-900 text-white p-4 rounded-lg">
+            <div className="space-y-2 font-mono">
+              {cvData.languages.map((language) => (
+                <div key={language.id} className="flex justify-between">
+                  <span className="text-teal-400">{language.name}</span>
+                  <span className="text-gray-400">{language.proficiency}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Achievements & Awards */}
+      {cvData.achievements && cvData.achievements.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-teal-600 mb-3 flex items-center">
+            <span className="text-gray-400 mr-2">{'// '}</span>
+            ACHIEVEMENTS & AWARDS
+          </h2>
+          {cvData.achievements.map((achievement) => (
+            <div key={achievement.id} className="bg-gray-50 p-4 rounded-lg mb-3 border-l-4 border-teal-600">
+              <h3 className="font-bold text-gray-900 mb-1">{achievement.title}</h3>
+              <p className="text-gray-700 text-sm">{achievement.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* References */}
       {cvData.references && (
         <div className="mb-8">

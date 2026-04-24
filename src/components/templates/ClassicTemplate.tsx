@@ -121,6 +121,57 @@ const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ cvData }) => {
         </div>
       )}
 
+      {/* Projects */}
+      {cvData.projects && cvData.projects.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-bold text-black mb-4 uppercase tracking-wide border-b border-black pb-1">
+            Projects
+          </h2>
+          {cvData.projects.map((project) => (
+            <div key={project.id} className="mb-6">
+              <div>
+                <h3 className="font-bold text-black uppercase">{project.title}</h3>
+                {project.technologies && project.technologies.length > 0 && (
+                  <p className="text-sm text-black font-medium">{project.technologies.join(', ')}</p>
+                )}
+              </div>
+              <p className="text-sm text-black leading-relaxed mt-1">{project.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Languages */}
+      {cvData.languages && cvData.languages.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-bold text-black mb-2 uppercase tracking-wide border-b border-black pb-1">
+            Languages
+          </h2>
+          <div className="space-y-1">
+            {cvData.languages.map((language) => (
+              <div key={language.id} className="text-sm text-black">
+                • {language.name} ({language.proficiency})
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements & Awards */}
+      {cvData.achievements && cvData.achievements.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-bold text-black mb-4 uppercase tracking-wide border-b border-black pb-1">
+            Achievements & Awards
+          </h2>
+          {cvData.achievements.map((achievement) => (
+            <div key={achievement.id} className="mb-4">
+              <h3 className="font-bold text-black">{achievement.title}</h3>
+              <p className="text-sm text-black leading-relaxed">{achievement.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* References */}
       {cvData.references && (
         <div className="mb-8">

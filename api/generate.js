@@ -3,12 +3,20 @@ const {
     MAX_PROMPT_LENGTH,
     sanitizeString,
     callGroq,
+    getClientIP,
+    checkRateLimit,
 } = require('./_helpers.js');
 
 module.exports = async function handler(req, res) {
     // Only allow POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Check rate limit
+    const clientIP = getClientIP(req);
+    if (!checkRateLimit(clientIP)) {
+        return res.status(429).json({ error: 'Too many requests. Please wait a moment before trying again.' });
     }
 
     try {
