@@ -1,4 +1,4 @@
-const {
+import {
     CV_STRUCTURE_PROMPT,
     MAX_CV_TEXT_LENGTH,
     MAX_JOB_DETAILS_LENGTH,
@@ -6,9 +6,9 @@ const {
     callGroq,
     getClientIP,
     checkRateLimit,
-} = require('./_helpers.js');
+} from './_helpers.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
     // Only allow POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -65,4 +65,5 @@ ${CV_STRUCTURE_PROMPT}`,
         console.error('[AI Optimize Error]:', error.message);
         return res.status(500).json({ error: error.message || 'Failed to optimize CV.' });
     }
-};
+}
+

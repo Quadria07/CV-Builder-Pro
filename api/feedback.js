@@ -1,7 +1,5 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FEEDBACK_EMAIL = 'quadriadebisi3@gmail.com';
 
 const feedbackTypeLabels = {
@@ -18,6 +16,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.error('[Feedback Error]: RESEND_API_KEY is missing');
+      return res.status(500).json({ error: 'Feedback service is not configured (missing API key).' });
+    }
+
+    const resend = new Resend(apiKey);
     const { category, rating, message, userEmail, timestamp, userAgent } = req.body;
 
     // Validation
@@ -85,7 +90,7 @@ export default async function handler(req, res) {
       <div class="footer">
         <p><strong>Submitted:</strong> ${feedbackDate}</p>
         <p><strong>User Agent:</strong> ${escapeHtml(userAgent)}</p>
-        <p><strong>IP Address:</strong> ${req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown'}</p>
+        <p><strong>IP Address:</strong> ${req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'Unknown'}</p>
       </div>
     </div>
   </div>
@@ -103,7 +108,7 @@ export default async function handler(req, res) {
     });
 
     if (emailResponse.error) {
-      console.error('Resend email error:', emailResponse.error);
+      console.error('[Feedback Email Error]:', emailResponse.error);
       return res.status(500).json({
         error: 'Failed to send feedback email',
         details: emailResponse.error,
@@ -116,7 +121,7 @@ export default async function handler(req, res) {
       messageId: emailResponse.data?.id,
     });
   } catch (error) {
-    console.error('Feedback API error:', error);
+    console.error('[Feedback API Error]:', error);
     return res.status(500).json({
       error: 'Internal server error',
       message: error.message,
@@ -135,3 +140,4 @@ function escapeHtml(text) {
   };
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
+

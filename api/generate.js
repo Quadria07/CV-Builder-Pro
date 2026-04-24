@@ -1,13 +1,13 @@
-const {
+import {
     CV_STRUCTURE_PROMPT,
     MAX_PROMPT_LENGTH,
     sanitizeString,
     callGroq,
     getClientIP,
     checkRateLimit,
-} = require('./_helpers.js');
+} from './_helpers.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
     // Only allow POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -49,4 +49,5 @@ module.exports = async function handler(req, res) {
         console.error('[AI Generate Error]:', error.message);
         return res.status(500).json({ error: error.message || 'Failed to generate CV.' });
     }
-};
+}
+

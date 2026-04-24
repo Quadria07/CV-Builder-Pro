@@ -1,11 +1,11 @@
-const {
+import {
     CV_STRUCTURE_PROMPT,
     MAX_CV_TEXT_LENGTH,
     sanitizeString,
     callGroq,
-} = require('./_helpers.js');
+} from './_helpers.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -40,4 +40,5 @@ ${CV_STRUCTURE_PROMPT}`;
         console.error('[AI Fix Error]:', error.message);
         return res.status(500).json({ error: error.message || 'Failed to automatically fix CV.' });
     }
-};
+}
+

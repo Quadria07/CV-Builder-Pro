@@ -1,4 +1,4 @@
-const { callGroq } = require('./_helpers.js');
+import { callGroq } from './_helpers.js';
 
 const MAX_CV_LENGTH = 15000;
 
@@ -19,7 +19,7 @@ const ATS_PROMPT = `You are an expert ATS (Applicant Tracking System) specialist
 
 Be honest and specific. Tips must be actionable and concise (max 15 words). Focus heavily on the Job Description match if one is provided.`;
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -50,4 +50,5 @@ module.exports = async function handler(req, res) {
         console.error('[ATS Analyze Error]:', error.message);
         return res.status(500).json({ error: error.message || 'Failed to analyze CV.' });
     }
-};
+}
+

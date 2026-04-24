@@ -1,9 +1,9 @@
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+export const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+export const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
-const MAX_PROMPT_LENGTH = 15000;
-const MAX_CV_TEXT_LENGTH = 15000;
-const MAX_JOB_DETAILS_LENGTH = 15000;
+export const MAX_PROMPT_LENGTH = 15000;
+export const MAX_CV_TEXT_LENGTH = 15000;
+export const MAX_JOB_DETAILS_LENGTH = 15000;
 
 // Simple rate limiter using IP + timestamp (in-memory)
 // Note: In production with multiple serverless instances, consider using Redis/external service
@@ -11,7 +11,7 @@ const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 60 seconds
 const RATE_LIMIT_MAX = 10; // 10 requests per window
 
-function getClientIP(req) {
+export function getClientIP(req) {
   return (
     req.headers['x-forwarded-for']?.split(',')[0].trim() ||
     req.headers['x-real-ip'] ||
@@ -20,7 +20,7 @@ function getClientIP(req) {
   );
 }
 
-function checkRateLimit(clientIP) {
+export function checkRateLimit(clientIP) {
   const now = Date.now();
   const key = clientIP;
 
@@ -40,7 +40,7 @@ function checkRateLimit(clientIP) {
   return true;
 }
 
-const CV_STRUCTURE_PROMPT = `You must respond ONLY with a valid JSON object matching this exact structure. No markdown, no explanation, only the JSON:
+export const CV_STRUCTURE_PROMPT = `You must respond ONLY with a valid JSON object matching this exact structure. No markdown, no explanation, only the JSON:
 {
   "personalInfo": {
     "name": "string",
@@ -93,12 +93,12 @@ const CV_STRUCTURE_PROMPT = `You must respond ONLY with a valid JSON object matc
   "references": "Available on request"
 }`;
 
-function sanitizeString(input, maxLen) {
+export function sanitizeString(input, maxLen) {
   if (typeof input !== 'string') return '';
   return input.trim().slice(0, maxLen);
 }
 
-async function callGroq(messages) {
+export async function callGroq(messages) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error('AI service is not configured.');
@@ -146,13 +146,3 @@ async function callGroq(messages) {
   }
 }
 
-module.exports = {
-  CV_STRUCTURE_PROMPT,
-  MAX_PROMPT_LENGTH,
-  MAX_CV_TEXT_LENGTH,
-  MAX_JOB_DETAILS_LENGTH,
-  sanitizeString,
-  callGroq,
-  getClientIP,
-  checkRateLimit,
-};
